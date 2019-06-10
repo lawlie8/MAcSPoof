@@ -4,7 +4,6 @@ import subprocess
 import time
 import random
 import ctypes, sys
-import ctypes, sys
 def is_admin():
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
@@ -22,15 +21,14 @@ if is_admin():
     for i in range(0,line_numbers):
         dev_des = hu[i].find('Description')
         device = hu[i][dev_des:dev_des + 800]
-        device = device.strip(':')
-        device = device.split('\n')
+        device = device.strip(':').split('\n')
+        #device = device.split('\n')
         device = ''.join(device)
         dl.append(device)
     for r in dl:
         if r != '':
             r = r.split('Description . . . . . . . . . . . : ')
             r = ''.join(r)
-            #print(r)
             Adapterlist.append(r)
     x = open("ip.txt",'r+')
     hu = x.readlines()
@@ -52,25 +50,26 @@ if is_admin():
         print(i,k,h)
     x.close()
     os.system('del ip.txt')
-    choice = int(input('Choose Device:->'))
-    if choice == 1:
-        random_mac = Addlist[0]
-    elif choice ==2:
-        random_mac = Addlist[1]
-    elif choice ==3:
-        random_mac = Addlist[2]
-    elif choice ==4:
-        random_mac = Addlist[3]
-    elif choice ==5:
-        random_mac = Addlist[4]
-    print('Ok')
+
+    while True:
+        try:
+            choice = int(input('Choose Device:->'))
+            if choice > len(Addlist):
+                print("Device out of range")
+            else:
+                break
+        except ValueError as er:
+            print(er)
+
     random_mac = "02"
     list = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F']
     for i in range(0,10):
         x = random.choice(list)
         random_mac = random_mac + x
 
-    list = [r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0001' -Name NetworkAddress",
+    list = [
+    r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0000' -Name NetworkAddress",
+    r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0001' -Name NetworkAddress",
     r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0002' -Name NetworkAddress",
     r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0003' -Name NetworkAddress",
     r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0004' -Name NetworkAddress",
@@ -93,25 +92,41 @@ if is_admin():
     r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0021' -Name NetworkAddress",
     r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0022' -Name NetworkAddress",
     ]
-    i2 = os.popen(r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0002' -Name NetworkAddress").read()
+    i2 = Addlist[choice - 1].split('-')
+    cscs = Addlist[choice -1]
+    i2 = ''.join(i2)
     for i in list:
-        cou = os.popen(i).read()
+        k = i.replace('NetworkAddress','DriverDesc')
+        j = i.replace('NetworkAddress','OriginalNetworkAddress')
+        cou = os.popen(i).read().split('\n')
+        cou = str(''.join(cou))
+        if cou.split(' ') == i2.split(' '):
+            if os.popen(k).read().split('\n')[0] == Adapterlist[choice - 1].strip(' '):
+                i = i.replace('Get-ItemPropertyValue','Set-ItemProperty')
 
-        if cou == i2:
-            i = i.replace('Get-ItemPropertyValue','Set-ItemProperty')
-            print(i)
-            try:
-                os.system(i + " -Value "+ random_mac)
-            except:
-                print('not done')
-            print('done')
-            break
+                try:
+                    os.system(i + " -Value "+ random_mac)
+                except PathNotFound as err:
 
-    os.system('powershell netsh interface set interface name="Wi-Fi" admin=disabled')
-    print('Interface Disabled')
-    time.sleep(2)
-    os.system('powershell netsh interface set interface name="Wi-Fi" admin=enabled')
-    print('Interface Enabled')
+                    i = i.replace('NetworkAddress','OriginalNetworkAddress')
+                    os.system(i + " -Value "+ random_mac)
+                break
+        elif os.popen(j).read().split('\n')[0] == cscs.strip(' '):
+            if os.popen(k).read().split('\n')[0] == Adapterlist[choice - 1].strip(' '):
+                i = i.replace('Get-ItemPropertyValue','Set-ItemProperty')
+                i = i.replace('NetworkAddress','OriginalNetworkAddress')
+                os.system(i + " -Value "+ cscs)
+        
+    try:
+        os.system('powershell netsh interface set interface name="Wi-Fi" admin=disabled')
+        os.system('powershell netsh interface set interface name="Wi-Fi" admin=enabled')
+        os.system('powershell netsh interface set interface name="tap" admin=disabled')
+        os.system('powershell netsh interface set interface name="tap" admin=enabled')
+        os.system('powershell netsh interface set interface name="Ethernet" admin=disabled')
+        os.system('powershell netsh interface set interface name="Ethernet" admin=enabled')
+    except:
+        print('Problem at restarting device do it manually')
+
 else:
     # Re-run the program with admin rights
     ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
