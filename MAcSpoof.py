@@ -4,6 +4,7 @@ import subprocess
 import time
 import random
 import ctypes, sys
+import re
 def is_admin():
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
@@ -60,12 +61,26 @@ if is_admin():
                 break
         except ValueError as er:
             print(er)
-
-    random_mac = "02"
-    list = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F']
-    for i in range(0,10):
-        x = random.choice(list)
-        random_mac = random_mac + x
+    while True:
+        rand_man = int(input('Enter 1 for random assignment 2 for manual:\t'))
+        if rand_man == 1:
+            random_mac = "02"
+            list = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F']
+            for i in range(0,10):
+                x = random.choice(list)
+                random_mac = random_mac + x
+        break
+        if rand_man == 2:
+            while True:
+                mac1 = input()
+                if len(mac1) != 10:
+                    print('\nmac to long use 10 characters\n')
+                if mac1 in list:
+                    random_mac = mac1
+                    break
+                else:
+                    print('enter characters from list',list)
+                break
 
     list = [
     r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0000' -Name NetworkAddress",
@@ -92,6 +107,7 @@ if is_admin():
     r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0021' -Name NetworkAddress",
     r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0022' -Name NetworkAddress",
     ]
+
     i2 = Addlist[choice - 1].split('-')
     cscs = Addlist[choice -1]
     i2 = ''.join(i2)
@@ -106,8 +122,7 @@ if is_admin():
 
                 try:
                     os.system(i + " -Value "+ random_mac)
-                except PathNotFound as err:
-
+                except:
                     i = i.replace('NetworkAddress','OriginalNetworkAddress')
                     os.system(i + " -Value "+ random_mac)
                 break
@@ -116,7 +131,7 @@ if is_admin():
                 i = i.replace('Get-ItemPropertyValue','Set-ItemProperty')
                 i = i.replace('NetworkAddress','OriginalNetworkAddress')
                 os.system(i + " -Value "+ cscs)
-        
+
     try:
         os.system('powershell netsh interface set interface name="Wi-Fi" admin=disabled')
         os.system('powershell netsh interface set interface name="Wi-Fi" admin=enabled')
@@ -125,7 +140,9 @@ if is_admin():
         os.system('powershell netsh interface set interface name="Ethernet" admin=disabled')
         os.system('powershell netsh interface set interface name="Ethernet" admin=enabled')
     except:
-        print('Problem at restarting device do it manually')
+        print('Problem at restarting device do it manually\n')
+        print("Enter to Continue\n")
+        lahaghakjgh = input()
 
 else:
     # Re-run the program with admin rights
