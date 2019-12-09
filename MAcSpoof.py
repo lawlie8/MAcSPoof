@@ -61,27 +61,26 @@ if is_admin():
                 break
         except ValueError as er:
             print(er)
-    while True:
-        rand_man = int(input('Enter 1 for random assignment 2 for manual:\t'))
-        if rand_man == 1:
-            random_mac = "02"
-            list = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F']
-            for i in range(0,10):
-                x = random.choice(list)
-                random_mac = random_mac + x
-        break
-        if rand_man == 2:
-            while True:
-                mac1 = input()
-                if len(mac1) != 10:
-                    print('\nmac to long use 10 characters\n')
-                if mac1 in list:
-                    random_mac = mac1
-                    break
-                else:
-                    print('enter characters from list',list)
-                break
 
+    rand_man = int(input('Enter 1 for random assignment 2 for manual:\t'))
+    if rand_man == 1:
+        random_mac = "02"
+        list = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F']
+        for i in range(0,10):
+            x = random.choice(list)
+            random_mac = random_mac + x
+            print(random_mac)
+    elif rand_man == 2:
+        while True:
+            mac1 = str(input('Enter_Mac_\t'))
+            if len(mac1) != 10:
+
+                print('\nmac to length must be 10 characters\n')
+            else:
+                random_mac = mac1
+                break
+    else:
+        print('Invalid Choice\n')
     list = [
     r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0000' -Name NetworkAddress",
     r"powershell Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0001' -Name NetworkAddress",
@@ -112,25 +111,45 @@ if is_admin():
     cscs = Addlist[choice -1]
     i2 = ''.join(i2)
     for i in list:
-        k = i.replace('NetworkAddress','DriverDesc')
+        driver_description = i.replace('NetworkAddress','DriverDesc')
         j = i.replace('NetworkAddress','OriginalNetworkAddress')
-        cou = os.popen(i).read().split('\n')
-        cou = str(''.join(cou))
-        if cou.split(' ') == i2.split(' '):
-            if os.popen(k).read().split('\n')[0] == Adapterlist[choice - 1].strip(' '):
-                i = i.replace('Get-ItemPropertyValue','Set-ItemProperty')
+        #cou = os.popen(i).read().split('\n')
+        #cou = str(''.join(cou))
+        #cou = cou.split('-')
+        #cou = str(''.join(cou))
+        #print(cou + ' ====== ' + i2)
+        #print(os.popen(driver_description).read().split('\n')[0],Adapterlist[choice - 1])
+        #testttt = input()
 
+        if os.popen(driver_description).read().split('\n')[0] == Adapterlist[choice - 1]:
+            cou = os.popen(i).read().split('\n') #cou is mac from registry
+            cou = str(''.join(cou))
+            cou = cou.split('-')
+            cou = str(''.join(cou))
+            #print(os.popen(k).read().split('\n')[0])   #test
+            #jhsjahfkjah_s = input('check here')#test
+            if cou.lower() == i2.lower(): #i2 is mac from ipconfig/all thingy
+                set_value = i.replace('Get-ItemPropertyValue','Set-ItemProperty')
                 try:
-                    os.system(i + " -Value "+ random_mac)
+                    os.system(set_value + " -Value " + random_mac)
                 except:
-                    i = i.replace('NetworkAddress','OriginalNetworkAddress')
-                    os.system(i + " -Value "+ random_mac)
-                break
-        elif os.popen(j).read().split('\n')[0] == cscs.strip(' '):
-            if os.popen(k).read().split('\n')[0] == Adapterlist[choice - 1].strip(' '):
-                i = i.replace('Get-ItemPropertyValue','Set-ItemProperty')
-                i = i.replace('NetworkAddress','OriginalNetworkAddress')
-                os.system(i + " -Value "+ cscs)
+                    print('cant change value')
+                    exit()
+                #if ther exist no key add key by using 'New-ItemProperty -Path "HKCU:\dummy\NetwrixKey" -Name "NetwrixParam" -Value ”NetwrixValue”  -PropertyType "String"'
+            try:#i = os.system(r"powershell New-ItemProperty -Path 'HKLM:\\SYSTEM\\ControlSet001\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0001' -Name test -Value "+ random_mac + " -PropertyType 'String' ")
+                registry_value = os.popen(i).read().split('\n')[0] #test
+                #print('registry_value = {}'.format(registry_value[33:62]))#test
+                if registry_value[33:62] == 'NetworkAddress does not exist':
+                    new_item_entry = i.replace('Get-ItemPropertyValue','New-ItemProperty')
+                    #print(new_item_entry)
+                    #askdjakljd = input('new item entry is ____')
+                    os.system(new_item_entry + " -Value "+ random_mac + " -PropertyType 'String' ")
+                    print('Address Changed Restarting Devices')
+                    break
+                else:
+                    os.system(set_value + " -Value " + random_mac)
+            except:
+                print('no works on 139')
 
     try:
         os.system('powershell netsh interface set interface name="Wi-Fi" admin=disabled')
